@@ -10,8 +10,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(expressSanitizer());
 
 
-var PORT = process.env.PORT || "3000";
-var IP = process.env.IP || "127.0.0.1";
+var PORT = process.env.PORT || "7000";
+var IP = process.env.IP || "0.0.0.0";
 
 const SALT = "oJETE78@flipasMIL1009";
 
@@ -27,20 +27,20 @@ app.get("/score", function(req, res){
 app.get("/score-min", function(req, res){
 
     console.log("devuelvo");
-    res.send("5");
+    res.send("1");
 
 })
 
 
 app.post("/score", function(req, res){
 
-//console.log(req)  ;
+//console.log(req);
     
     console.log(req.body);
 
-    let {datos, hash} = req.body;
+    let {USER, SCORE, hash} = req.body;
 
-    let palabra = crypto.createHash("md5").update(SALT+datos).digest("hex");
+    let palabra = crypto.createHash("md5").update(SALT+USER+SCORE).digest("hex");
     
     if (palabra === hash){
         console.log("SÍ te creo");
