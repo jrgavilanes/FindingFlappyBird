@@ -38,7 +38,6 @@ app.get("/score", function (req, res) {
             throw err;
         }
 
-
         console.log(new Date().toLocaleString() + "-> score -> " + req.ip);
 
         let salida = "";
@@ -77,51 +76,36 @@ app.get("/score-min", function (req, res) {
 
 app.post("/score", function (req, res) {
 
-    //console.log(req);
-
-    //console.log(req.body);
-
     let { USER, SCORE, hash } = req.body;
 
     let palabra = crypto.createHash("md5").update(SALT + USER + SCORE).digest("hex");
 
     if (palabra === hash) {
-        //console.log("SÍ te creo");
 
         USER = req.sanitize(USER);
         USER = USER.trim().toUpperCase();
         SCORE = req.sanitize(SCORE);
 
-        // let SQL = `INSERT INTO scores(user,score) VALUES('${USER}',${SCORE});`;
-        // console.log(SQL);
-
         db.run(`INSERT INTO scores(user,score) VALUES(?,?);`, [USER, SCORE], (err) => {
+          
             if (err) {
                 console.log(err);
                 res.status(500);
             }
+          
             console.log(new Date().toLocaleString() + "-> insert ok -> (" + USER + " "+ SCORE + ") -> " + req.ip);
+
             res.status(200).send("ok");
         });    
 
     } else {
-        //console.log("No te creo", USER, SCORE);
+
         console.log(new Date().toLocaleString() + "-> insert KO -> (" + USER + " "+ SCORE + ") -> " + req.ip);
         res.status(404).send("ko");
-    }
 
-    // descripcion = req.sanitize(descripcion);
-
-    // let nota = {};
-    // nota.titulo = titulo;
-    // nota.descripcion = descripcion;
-
-    // db.post("notas", nota);
-
-    // res.redirect("/") ;
+    }   
 
 });
-
 
 app.get("*", function (req, res) {
 
@@ -129,9 +113,37 @@ app.get("*", function (req, res) {
 
 });
 
-//Server starts listening.
-app.listen(PORT, IP, function () {
+const server = app.listen(PORT, IP, function () {
 
-    console.log("Server listening ... Port: " + PORT + ", IP: " + IP);
+    console.log(new Date().toLocaleString() + "-> Server listening ... Port: " + PORT + ", IP: " + IP);
 
 });
+
+
+//Apagado controlado.
+process.on('SIGTERM', shutDown);
+process.on('SIGINT', shutDown);
+
+function shutDown() {
+    
+    console.log(new Date().toLocaleString() + '-> Received kill signal, shutting down gracefully');
+    
+    server.close(() => {
+     
+        db.close((err) => {
+        
+            if (err) {
+        
+                return console.error(new Date().toLocaleString() + "-> Error closing DB: " + err.message);
+        
+            }
+        
+            console.log(new Date().toLocaleString() +  '-> Close the database connection.');
+            
+            process.exit(0);
+
+        });        
+
+    });  
+    
+}
